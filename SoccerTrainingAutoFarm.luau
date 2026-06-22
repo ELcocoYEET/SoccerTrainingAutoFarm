@@ -834,9 +834,11 @@ task.spawn(function() while sg and sg.Parent do
                 end
             end
         end
-        -- Phase 2: combine base potions into Cocktail Potions
+        -- Phase 2: try Royal first (uses existing Cocktail stock, preserves Luck)
+        while canCraftItem("Royal Potion") do doCraftItem("Royal Potion") end
+        -- Phase 3: craft Cocktails only with surplus base potions
         while canCraftItem("Cocktail Potion") do doCraftItem("Cocktail Potion") end
-        -- Phase 3: craft all Royal Potions
+        -- Phase 4: try Royal again with freshly crafted Cocktails
         while canCraftItem("Royal Potion") do doCraftItem("Royal Potion") end
         -- Phase 4: golden fruits from leftover raw fruits
         for _, name in ipairs({"Golden Banana Fruit","Golden Apple Fruit","Golden Carrot Fruit","Golden Orange Fruit","Golden Blueberry Fruit"}) do
