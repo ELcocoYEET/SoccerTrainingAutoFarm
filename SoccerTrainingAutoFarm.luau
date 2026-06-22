@@ -76,6 +76,7 @@ local UPGRADES = {
 
 local COLS = {
     main     = Color3.fromRGB(255,180,50),
+    pets     = Color3.fromRGB(200,80,255),
     upgrades = Color3.fromRGB(140,100,255),
     misc     = Color3.fromRGB(80,180,255),
     tp       = Color3.fromRGB(255,120,200),
@@ -314,11 +315,11 @@ local sWorld = chip("WORLD",  4, Color3.fromRGB(255,215,80))
 
 -- Tab bar
 local tabBar = F(body, UDim2.new(1,-16,0,30), UDim2.new(0,8,0,74), Color3.fromRGB(14,14,24)); Corner(tabBar,8)
-local TABS   = {"MAIN","UPGRADES","MISC","TP"}
+local TABS   = {"MAIN","PETS","UPGRADES","MISC","TP"}
 local tBtns  = {}
 for i,n in ipairs(TABS) do
-    local b=B(tabBar,n,UDim2.new(0.25,-5,1,-6),UDim2.new((i-1)*0.25,3,0,3),Color3.fromRGB(18,18,30),Color3.fromRGB(100,100,130))
-    Corner(b,6); b.TextSize=11; tBtns[n]=b
+    local b=B(tabBar,n,UDim2.new(0.2,-4,1,-6),UDim2.new((i-1)*0.2,3,0,3),Color3.fromRGB(18,18,30),Color3.fromRGB(100,100,130))
+    Corner(b,6); b.TextSize=10; tBtns[n]=b
 end
 
 local cnt = F(body, UDim2.new(1,-16,1,-112), UDim2.new(0,8,0,112), Color3.new(0,0,0), 1); cnt.ClipsDescendants=true
@@ -360,21 +361,137 @@ local function tRow(par, lbl, sub, key, yp, col)
     return row
 end
 
--- ── MAIN TAB (scrollable) ────────────────────────────────────────────────────
+-- ── MAIN TAB ──────────────────────────────────────────────────────────────────
 local MAIN_ROWS = {
-    {"AUTO TRAIN",     "Power training (server debounce 1s)",         "autoTrain",    COLS.main},
-    {"AUTO KICK",      "Throw → ClickBoost → Finish for cash",        "autoKick",     Color3.fromRGB(80,220,120)},
-    {"AUTO REBIRTH",   "Most rebirths first → cheapest (no Robux)",   "autoRebirth",  Color3.fromRGB(120,160,255)},
-    {"EQUIP BEST PETS","Auto equip strongest pets every 5s",          "autoEquipPets",Color3.fromRGB(200,80,255)},
-    {"AUTO CRAFT PETS","Craft 5 same pets (Classic→Gold→Diamond)",    "autoCraftPets",Color3.fromRGB(120,255,180)},
-    {"AUTO BUY BALL",  "Buy & equip best affordable ball (no Robux)", "autoBuyBall",  Color3.fromRGB(255,200,50)},
-    {"AUTO HATCH EGGS","Hatch all eggs found in inventory",           "autoHatchEgg", Color3.fromRGB(255,120,50)},
+    {"AUTO TRAIN",    "Power training (server debounce 1s)",        "autoTrain",  COLS.main},
+    {"AUTO KICK",     "Throw → ClickBoost → Finish for cash",       "autoKick",   Color3.fromRGB(80,220,120)},
+    {"AUTO REBIRTH",  "Most rebirths first → cheapest (no Robux)",  "autoRebirth",Color3.fromRGB(120,160,255)},
+    {"AUTO BUY BALL", "Buy & equip best affordable ball (no Robux)","autoBuyBall",Color3.fromRGB(255,200,50)},
 }
-local mScr = Instance.new("ScrollingFrame", pages.MAIN)
+local mScr = Instance.new("ScrollingFrame",pages.MAIN)
 mScr.Size=UDim2.new(1,0,1,0); mScr.BackgroundTransparency=1; mScr.BorderSizePixel=0
 mScr.ScrollBarThickness=3; mScr.CanvasSize=UDim2.new(0,0,0,#MAIN_ROWS*54)
-mScr.ScrollBarImageColor3=Color3.fromRGB(80,180,255)
+mScr.ScrollBarImageColor3=Color3.fromRGB(255,180,50)
 for i,r in ipairs(MAIN_ROWS) do tRow(mScr,r[1],r[2],r[3],(i-1)*54,r[4]) end
+
+-- ── PETS TAB ──────────────────────────────────────────────────────────────────
+local PET_ROWS = {
+    {"EQUIP BEST PETS","Auto equip strongest pets every 5s",       "autoEquipPets",Color3.fromRGB(200,80,255)},
+    {"AUTO CRAFT PETS","Craft 5 same pets (Classic→Gold→Diamond)", "autoCraftPets",Color3.fromRGB(120,255,180)},
+    {"AUTO HATCH EGGS","Hatch inventory eggs + buy from stand",    "autoHatchEgg", Color3.fromRGB(255,120,50)},
+}
+local pScr = Instance.new("ScrollingFrame",pages.PETS)
+pScr.Size=UDim2.new(1,0,1,0); pScr.BackgroundTransparency=1; pScr.BorderSizePixel=0
+pScr.ScrollBarThickness=3; pScr.CanvasSize=UDim2.new(0,0,0,300)
+pScr.ScrollBarImageColor3=Color3.fromRGB(200,80,255)
+for i,r in ipairs(PET_ROWS) do tRow(pScr,r[1],r[2],r[3],(i-1)*54,r[4]) end
+
+-- EGG CONTROLS (in PETS tab)
+local EGG_BASE = #PET_ROWS * 54  -- 162
+
+local worldEggs   = {}
+local eggIdx      = 1
+local hatchAmt    = 1
+local eggDropOpen = false
+
+local function fmtCash(n)
+    local sfx = {"K","M","B","T","Qd","Qn","Sx","Sp","Oc","No","De","UDe","DDe","TDe","QdDe","QnDe"}
+    local v = tonumber(n) or 0; local i = 0
+    while v >= 1000 and i < #sfx do v=v/1000; i=i+1 end
+    if i==0 then return tostring(math.floor(v)) end
+    return string.format("%.1f%s",v,sfx[i])
+end
+
+-- Divider line
+local divLine = F(pScr,UDim2.new(1,-16,0,1),UDim2.new(0,8,0,EGG_BASE+6),Color3.fromRGB(40,40,60))
+L(pScr,"EGG TO BUY",UDim2.new(1,-12,0,16),UDim2.new(0,8,0,EGG_BASE+12),Color3.fromRGB(255,120,50),10,Enum.Font.GothamBold)
+
+local eggDropBtn = B(pScr,"Select Egg  ▼",UDim2.new(1,-16,0,32),UDim2.new(0,8,0,EGG_BASE+28),Color3.fromRGB(18,18,34),Color3.fromRGB(220,180,100))
+Corner(eggDropBtn,6); Stroke(eggDropBtn,Color3.fromRGB(255,120,50)); eggDropBtn.TextSize=11; eggDropBtn.Font=Enum.Font.Gotham
+
+local eggListFrame = F(pScr,UDim2.new(1,-16,0,0),UDim2.new(0,8,0,EGG_BASE+62),Color3.fromRGB(14,14,26))
+Corner(eggListFrame,6); Stroke(eggListFrame,Color3.fromRGB(255,100,30)); eggListFrame.ClipsDescendants=true
+local eggListLayout = Instance.new("UIListLayout",eggListFrame)
+eggListLayout.FillDirection=Enum.FillDirection.Vertical; eggListLayout.Padding=UDim.new(0,2)
+local eggPad = Instance.new("UIPadding",eggListFrame)
+eggPad.PaddingTop=UDim.new(0,4); eggPad.PaddingBottom=UDim.new(0,4)
+eggPad.PaddingLeft=UDim.new(0,4); eggPad.PaddingRight=UDim.new(0,4)
+
+local amtHdr = L(pScr,"HATCH AMOUNT",UDim2.new(1,-12,0,16),UDim2.new(0,8,0,EGG_BASE+66),Color3.fromRGB(255,120,50),10,Enum.Font.GothamBold)
+local amtRow  = F(pScr,UDim2.new(1,-16,0,32),UDim2.new(0,8,0,EGG_BASE+84),Color3.new(0,0,0),1)
+
+local amtBtns = {}
+for i,amt in ipairs({1,3,8}) do
+    local btn=B(amtRow,amt.."x",UDim2.new(1/3,-2,1,0),UDim2.new((i-1)/3,i>1 and 1 or 0,0,0),Color3.fromRGB(22,22,36),Color3.fromRGB(150,150,150))
+    Corner(btn,5); Stroke(btn,Color3.fromRGB(60,60,80)); amtBtns[i]={btn=btn,amt=amt}
+end
+
+local function setHatchAmt(a)
+    hatchAmt=a
+    for _,ab in ipairs(amtBtns) do
+        local on=ab.amt==a
+        ab.btn.BackgroundColor3=on and Color3.fromRGB(40,28,60) or Color3.fromRGB(22,22,36)
+        ab.btn.TextColor3=on and Color3.fromRGB(255,120,50) or Color3.fromRGB(150,150,150)
+        Stroke(ab.btn,on and Color3.fromRGB(255,120,50) or Color3.fromRGB(60,60,80))
+    end
+end
+setHatchAmt(1)
+for _,ab in ipairs(amtBtns) do ab.btn.MouseButton1Click:Connect(function() setHatchAmt(ab.amt) end) end
+
+local function updatePetsCanvas()
+    local listH = eggDropOpen and math.max(#worldEggs*28+8,0) or 0
+    eggListFrame.Size=UDim2.new(1,-16,0,listH)
+    local amtY=EGG_BASE+62+listH+4
+    amtHdr.Position=UDim2.new(0,8,0,amtY)
+    amtRow.Position=UDim2.new(0,8,0,amtY+18)
+    pScr.CanvasSize=UDim2.new(0,0,0,amtY+18+32+10)
+end
+
+local eggBtns={}
+local function refreshEggList()
+    for _,b in ipairs(eggBtns) do pcall(function() b:Destroy() end) end
+    eggBtns={}; worldEggs={}
+    if not EggsConfig then eggDropBtn.Text="No Config  ▼"; updatePetsCanvas(); return end
+    local area=tostring(lp:GetAttribute("CurrentArea") or "1")
+    local mArea=workspace.GameItems.Maps:FindFirstChild(area)
+    local eggsF=mArea and mArea:FindFirstChild("Eggs")
+    if not eggsF then eggDropBtn.Text="No Eggs Here  ▼"; updatePetsCanvas(); return end
+    for _,eggModel in ipairs(eggsF:GetChildren()) do
+        local name=eggModel.Name; local cfg=EggsConfig[name]
+        if cfg then
+            local pt=type(cfg.Price)=="table" and cfg.Price or {}
+            local cost=pt.Amount or 0; local cur=pt.Currency or "Cash"
+            if cur~="Robux" then table.insert(worldEggs,{name=name,cost=cost,model=eggModel}) end
+        end
+    end
+    table.sort(worldEggs,function(a,b) return a.cost>b.cost end)
+    eggIdx=math.clamp(eggIdx,1,math.max(1,#worldEggs))
+    if #worldEggs==0 then
+        eggDropBtn.Text="No Eggs Here  ▼"
+    else
+        local e=worldEggs[eggIdx]
+        eggDropBtn.Text=e.name.."  "..fmtCash(e.cost).."  "..(eggDropOpen and "▲" or "▼")
+    end
+    for i,egg in ipairs(worldEggs) do
+        local on=i==eggIdx
+        local btn=B(eggListFrame,egg.name.."   "..fmtCash(egg.cost).." Cash",UDim2.new(1,0,0,26),UDim2.new(0,0,0,0),on and Color3.fromRGB(40,28,60) or Color3.fromRGB(22,22,36),on and Color3.fromRGB(255,150,60) or Color3.fromRGB(180,180,180))
+        btn.TextSize=11; btn.Font=Enum.Font.Gotham; Corner(btn,5)
+        local ci=i
+        btn.MouseButton1Click:Connect(function()
+            eggIdx=ci; eggDropOpen=false; refreshEggList(); updatePetsCanvas()
+        end)
+        table.insert(eggBtns,btn)
+    end
+    updatePetsCanvas()
+end
+
+eggDropBtn.MouseButton1Click:Connect(function()
+    eggDropOpen=not eggDropOpen; refreshEggList(); updatePetsCanvas()
+end)
+table.insert(conns,lp:GetAttributeChangedSignal("CurrentArea"):Connect(function()
+    eggIdx=1; eggDropOpen=false; refreshEggList()
+end))
+refreshEggList()
 
 -- ── UPGRADES TAB ──────────────────────────────────────────────────────────────
 local uScr = Instance.new("ScrollingFrame",pages.UPGRADES)
@@ -613,23 +730,57 @@ task.spawn(function() while sg and sg.Parent do
     task.wait(5)
 end end)
 
--- AUTO HATCH EGGS — hatch any egg found in inventory
+-- AUTO HATCH EGGS — hatch inventory eggs + buy & hatch best affordable egg from current world
 task.spawn(function() while sg and sg.Parent do
     if toggles.autoHatchEgg then
         pcall(function()
+            -- 1) Hatch eggs already in inventory (non-Robux)
             local inv = cachedData and cachedData.Inventory
-            if not inv then return end
-            for name, count in pairs(inv) do
-                if EGG_NAMES[name] and (type(count) == "number") and count > 0 then
-                    for _ = 1, count do
-                        pcall(function() HatchEggRE:FireServer(name) end)
-                        task.wait(0.15)
+            if inv then
+                for name, count in pairs(inv) do
+                    if EGG_NAMES[name] and (type(count) == "number") and count > 0 then
+                        local cfg = EggsConfig and EggsConfig[name]
+                        local isRobux = cfg and (type(cfg.Price)=="table") and cfg.Price.Currency == "Robux"
+                        if not isRobux then
+                            for _ = 1, count do
+                                if not toggles.autoHatchEgg then return end
+                                pcall(function() HatchEggRE:FireServer(name) end)
+                                task.wait(0.1)
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- 2) Buy+hatch the selected egg from the dropdown
+            if #worldEggs > 0 and eggIdx <= #worldEggs then
+                local egg = worldEggs[eggIdx]
+                if egg and egg.cost > 0 then
+                    -- Teleport character within 9 studs of the egg stand (server proximity check)
+                    pcall(function()
+                        local mdl = egg.model
+                        if mdl and lp.Character then
+                            local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+                            if hrp then
+                                hrp.CFrame = CFrame.new(mdl:GetPivot().Position + Vector3.new(0,3,5))
+                            end
+                        end
+                    end)
+                    task.wait(0.1)
+                    local mode = hatchAmt==8 and "Octo" or hatchAmt==3 and "Triple" or "Single"
+                    local cash = getCash()
+                    local batchCost = egg.cost * hatchAmt
+                    while toggles.autoHatchEgg and cash >= batchCost do
+                        if not toggles.autoHatchEgg then break end
+                        pcall(function() HatchEggRE:FireServer(egg.name, mode) end)
+                        task.wait(0.1)
+                        cash = cash - batchCost
                     end
                 end
             end
         end)
     end
-    task.wait(3)
+    task.wait(1)
 end end)
 
 -- AUTO DAILY REWARDS — fire all daily/chest/spin/playtime/group remotes; server rejects if on cooldown
