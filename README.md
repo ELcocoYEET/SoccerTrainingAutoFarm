@@ -1,6 +1,6 @@
 # Soccer Training Auto Farm
 
-An all-in-one auto-farm GUI for **[🎉UPD!] Soccer Training⚽💥**. Sleek draggable interface with live stats, full kick/train automation, pet management, ball upgrading, juice machine crafting, egg hatching, and daily reward claiming. Built to run fully hands-free.
+An all-in-one auto-farm GUI for **[🎉UPD!] Soccer Training⚽💥**. Sleek draggable interface with live stats, full kick/train automation, pet management, ball upgrading, juice machine crafting, egg hatching, and daily reward claiming.
 
 > *Made by Claude with Love.*
 
