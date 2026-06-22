@@ -818,11 +818,16 @@ end end)
 -- then combine up to Cocktail → Royal Potion
 task.spawn(function() while sg and sg.Parent do
     if toggles.autoJuiceMachine and CraftingConfig then
-        -- Phase 1: craft Cash/Power/Luck one-at-a-time in rotation so no ingredient gets hogged
+        -- Phase 1: craft base potions, prioritising whichever we have least of first
+        -- (avoids Power stealing Carrots from Luck when Power stock is already high)
         local anyBase = true
         while anyBase do
             anyBase = false
-            for _, name in ipairs({"Cash Potion","Power Potion","Luck Potion"}) do
+            local baseOrder = {"Cash Potion","Power Potion","Luck Potion"}
+            table.sort(baseOrder, function(a, b)
+                return (cachedData.Inventory[a] or 0) < (cachedData.Inventory[b] or 0)
+            end)
+            for _, name in ipairs(baseOrder) do
                 if canCraftItem(name) then
                     doCraftItem(name)
                     anyBase = true
