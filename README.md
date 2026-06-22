@@ -16,10 +16,15 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/ELcocoYEET/SoccerTrai
 - ⚡ Auto Train — Power training (server debounce 1s)
 - 🦵 Auto Kick — Throw → ClickBoost → Finish for max cash
 - 🔄 Auto Rebirth — Most rebirths first → cheapest (never spends Robux)
+- ⚽ Auto Buy Ball — Chain-buy & equip best affordable ball (no Robux balls)
+
+### PETS Tab
 - 🐾 Equip Best Pets — Auto equip strongest pets every 5s
 - 🔨 Auto Craft Pets — Craft 5 same pets Classic→Gold→Diamond
-- ⚽ Auto Buy Ball — Chain-buy & equip best affordable ball (no Robux balls)
-- 🥚 Auto Hatch Eggs — Hatch all eggs found in inventory
+- 🥚 Auto Hatch Eggs — Hatch all eggs in inventory + buy & spam from world egg stands
+  - Dropdown to select which world egg to buy (sorted by value, Robux eggs excluded)
+  - 1x / 3x / 8x batch selector (maps to Single / Triple / Octo server mode)
+  - Auto-teleports character within range of the stand before each purchase
 
 ### MISC Tab
 - 🎫 Claim Season Pass — Claim all Free tier rewards (5s retry, never opens Robux prompt)
@@ -27,10 +32,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/ELcocoYEET/SoccerTrai
 - 🚫 No Kick FX — Remove loot debris, reward cards & cash pop-ups
 - 🍌 Auto Use Fruits — Use potions & fruits (skips already-active buffs)
 - 📅 Auto Daily — Claim daily/chest/spin/playtime/group rewards (60s cycle)
-- 🧃 Juice Machine — Smart craft: Carrot/Banana/etc → Royal Potion (round-robin to balance shared ingredients)
+- 🧃 Juice Machine — Smart craft: ingredients → Cocktail → Royal Potion (round-robin to balance shared ingredients)
 
 ### UPGRADES Tab
-- Auto-buy all 10 upgrades with Gems (Rebirth Buttons, Cash/Power Boost, Pet Equip, Egg Luck, Gold Chance, Hatch Speed, Pet Storage, Train Speed, Walk Speed)
+- Auto-buy all upgrades with Gems (Rebirth Buttons, Cash/Power Boost, Pet Equip, Egg Luck, Gold Chance, Hatch Speed, Pet Storage, Train Speed, Walk Speed)
 
 ### TP Tab
 - 🌍 World teleports: Spawn (W1), Desert (W2), Farm (W3), Atlantis (W4), World Cup (Event)
