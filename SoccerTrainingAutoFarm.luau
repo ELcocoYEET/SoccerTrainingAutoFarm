@@ -671,7 +671,7 @@ task.spawn(function() while sg and sg.Parent do
                 -- remove consumed ids and refresh data
                 for i = 1, 5 do table.remove(g.ids, 1) end
                 crafted = true
-                task.wait(0.5)
+                task.wait(0.001)
                 refreshData()
                 -- rebuild remaining from fresh data
                 local fresh = buildCraftGroups()
@@ -683,7 +683,7 @@ task.spawn(function() while sg and sg.Parent do
                 end)()
             end
         end
-        task.wait(crafted and 1 or 2)
+        task.wait(crafted and 0.001 or 0.001)
     else
         task.wait(0.5)
     end
@@ -745,7 +745,7 @@ task.spawn(function() while sg and sg.Parent do
                             for _ = 1, count do
                                 if not toggles.autoHatchEgg then return end
                                 pcall(function() HatchEggRE:FireServer(name) end)
-                                task.wait(0.1)
+                                task.wait(0.0001)
                             end
                         end
                     end
@@ -766,14 +766,14 @@ task.spawn(function() while sg and sg.Parent do
                             end
                         end
                     end)
-                    task.wait(0.1)
+                    task.wait(0.0001)
                     local mode = hatchAmt==8 and "Octo" or hatchAmt==3 and "Triple" or "Single"
                     local cash = getCash()
                     local batchCost = egg.cost * hatchAmt
                     while toggles.autoHatchEgg and cash >= batchCost do
                         if not toggles.autoHatchEgg then break end
                         pcall(function() HatchEggRE:FireServer(egg.name, mode) end)
-                        task.wait(0.1)
+                        task.wait(0.0001)
                         cash = cash - batchCost
                     end
                 end
